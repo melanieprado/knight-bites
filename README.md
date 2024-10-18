@@ -1,4 +1,4 @@
-# large-project
+# large-project: Knight Bites
 
 TEAM 2
 - Huelle, Jaden
