@@ -6,3 +6,4 @@ TEAM 2
 - Prado, Melanie
 - Urain, Andoni
 - Malik, Max
+- Keller, Sloan
