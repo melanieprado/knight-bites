@@ -1,0 +1,51 @@
+# A name for our Workflow
+name: Build and Deploy React App
+
+# Specifies that the workflow should be triggered on a Git push event.
+on:
+  push:
+    branches:
+      #Specifies the branches on which the workflow should be triggered
+      - main
+#Defines the jobs to be executed as part of the workflow
+jobs:
+  #The name of the job, in this case, "CI-CD."
+  CI-CD:
+    #Specifies that the job should run on the latest version of the Ubuntu operating system.
+    runs-on: ubuntu-latest
+    #Lists the individual steps to be executed within the job.
+    steps:
+      #Checks out the source code repository into the runner's workspace using the `actions/checkout@v2` GitHub Action.
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      #Sets up Node.js on the runner using the `actions/setup-node@v3` GitHub Action. It specifies that Node.js version 16 should be used.
+      - name: Set Up Node.js
+        uses: actions/setup-node@v3
+        # Allows passing additional parameters to the action, in this case, specifying the Node.js version.
+        with:
+          node-version: 20
+      #Installs project dependencies using the `npm install` command.
+      - name: Install Dependencies
+        run: npm install
+      #Builds the React app using the `npm run build` command.
+      - name: Build React App
+        run: npm run build
+      #Adds an SSH private key to the SSH agent
+      - name: Add SSH Key to Agent
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_2 }}
+      #Performs the actual deployment.
+      #It consists of a multi-line script (run:) Prints the current working directory and lists its contents.
+      #Outputs a message indicating the start of the deployment.
+      #Use SSH to connect to the Linux server (${{ secrets.SSH_HOST }}) with the specified port, user, and private key. It then changes to the deployment directory (/var/www/html), removes existing contents except for KnightBites server folder, and exits.
+      #Use scp to securely copy the contents of the local ./build/* directory to the specified deployment directory on the server.
+      #Outputs a message indicating the completion of the deployment.
+      - name: Deploy React App to Linux Droplet
+        run: |
+          echo "Current Working Directory: $(pwd)"
+          echo "Contents of the directory: $(ls -la)"
+          echo "Starting deployment....."
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd /var/www/html && find . -maxdepth 1 ! -name 'KnightBites' -exec rm -rf {} \; && exit"
+          scp -o StrictHostKeyChecking=no -P ${{ secrets.SSH_PORT }} -r ./dist/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/html
+          echo "Deployment completed."
